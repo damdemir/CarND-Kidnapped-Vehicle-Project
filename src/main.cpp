@@ -2,13 +2,17 @@
 #include <uWS/uWS.h>
 #include <iostream>
 #include <string>
+#include <random>
 #include "json.hpp"
 #include "particle_filter.h"
+#include "helper_functions.h"
 
 // for convenience
 using nlohmann::json;
 using std::string;
 using std::vector;
+using std::normal_distribution;
+
 
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
@@ -36,6 +40,9 @@ int main() {
   double sigma_pos [3] = {0.3, 0.3, 0.01};
   // Landmark measurement uncertainty [x [m], y [m]]
   double sigma_landmark [2] = {0.3, 0.3};
+  
+ 
+  normal_distribution<double> d_x(0,sigma_pos[0]);
 
   // Read map data
   Map map;
