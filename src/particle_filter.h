@@ -26,9 +26,13 @@ struct Particle {
 
 
 class ParticleFilter {  
+  int num_particles;
+  bool is_initialized;
+  std::vector<double> weights; 
  public:
   // Constructor
   // @param num_particles Number of particles
+  std::vector<Particle> particles;
   ParticleFilter() : num_particles(0), is_initialized(false) {}
 
   // Destructor
@@ -108,18 +112,10 @@ class ParticleFilter {
   std::string getAssociations(Particle best);
   std::string getSenseCoord(Particle best, std::string coord);
 
-  // Set of current particles
-  std::vector<Particle> particles;
 
  private:
-  // Number of particles to draw
-  int num_particles; 
+
   
-  // Flag, if filter is initialized
-  bool is_initialized;
-  
-  // Vector of weights of all particles
-  std::vector<double> weights; 
 };
 
 #endif  // PARTICLE_FILTER_H_

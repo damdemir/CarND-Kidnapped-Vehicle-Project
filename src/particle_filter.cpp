@@ -26,7 +26,7 @@ using std::uniform_real_distribution;
 using std::default_random_engine;
 using std::normal_distribution;
 
- default_random_engine gen;
+ //default_random_engine gen;
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
   /**
@@ -37,13 +37,14 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
    * NOTE: Consult particle_filter.h for more information about this method 
    *   (and others in this file).
    */
-  num_particles = 51;  // TODO: Set the number of particles
+  num_particles = 40;  // TODO: Set the number of particles
   particles.resize(num_particles);
   //weights.resize(num_particles);
   
   normal_distribution<double> dist_x(x,std[0]);
   normal_distribution<double> dist_y(y,std[1]);
   normal_distribution<double> dist_theta(theta,std[2]);
+  default_random_engine gen;
   //random particles are spreaded
   for(int i = 0; i <num_particles; i++)
   {
@@ -68,6 +69,10 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
    *  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
    *  http://www.cplusplus.com/reference/random/default_random_engine/
    */
+  normal_distribution<double> dist_x(0, std_pos[0]);
+  normal_distribution<double> dist_y(0, std_pos[1]);
+  normal_distribution<double> dist_theta(0, std_pos[2]);
+  default_random_engine gen;
   for(int i = 0; i<num_particles; i++)
   {
     
@@ -82,6 +87,9 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
       particles[i].y = particles[i].y + velocity / yaw_rate * (cos(particles[i].theta) - cos(particles[i].theta + yaw_rate * delta_t));
       particles[i].theta += yaw_rate * delta_t;
     }
+    particles[i].x += dist_x(gen);
+    particles[i].y += dist_y(gen);
+    particles[i].theta += dist_theta(gen);
   }
 
 }
@@ -142,8 +150,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     double p_x = particles[i].x;
     double p_y = particles[i].y;
     double p_theta = particles[i].theta;
-    double weight = 1.0;
     
+    //particles[i].weight = 1.0;
     vector<LandmarkObs> predictions;
     LandmarkObs prediction;
     //map landmark loop
@@ -176,8 +184,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
       transformed_os.push_back(transformed_os_n);
     }        
     dataAssociation(predictions, transformed_os);
-  
-    particles[i].weight = 1.0;
+  	double obs_weight = 1.0;
 
     for (unsigned int j = 0; j < transformed_os.size(); j++) 
     {
@@ -199,12 +206,11 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
         // calculate weight for this observation with multivariate Gaussian
         double s_x = std_landmark[0];
         double s_y = std_landmark[1];
-        weight *= ( 1/(2*M_PI*s_x*s_y)) * exp( -( pow(pr_x-o_x,2)/(2*pow(s_x, 2)) + (pow(pr_y-o_y,2)/(2*pow(s_y, 2))) ) );
+        obs_weight *= ( 1/(2*M_PI*s_x*s_y)) * exp( -( pow(pr_x-o_x,2)/(2*pow(s_x, 2)) + (pow(pr_y-o_y,2)/(2*pow(s_y, 2))) ) );
    
 
         // product of this obersvation weight with total observations weight
-        particles[i].weight = weight;//particles[i].weight *= obs_w;
-      	//weights[i].weight = weight;
+        particles[i].weight = obs_weight;//particles[i].weight *= obs_w;
     }
   }
 }
@@ -222,19 +228,24 @@ void ParticleFilter::resample() {
   {
   	weights.push_back(particles[i].weight);
   }
-  
-  uniform_int_distribution<int> uniintdist(0, num_particles-1);
+  default_random_engine gen;
+  std::discrete_distribution<size_t> uniintdist(weights.begin(), weights.end());
+  //uniform_int_distribution<int> uniintdist(0, num_particles-1);
   double max_weight = *max_element(weights.begin(), weights.end());
   auto index = uniintdist(gen);
   uniform_real_distribution<double> unirealdist(0.0, max_weight);  
 
   double beta = 0.0;
-  for (int i = 0; i < num_particles; i++) {
+  for (int i = 0; i < num_particles; i++) 
+  {
+    /*
     beta += unirealdist(gen) * 2.0*max_weight;//(rand()/(RAND_MAX + 1.0))*(max_weight*2.0);//unirealdist(gen) * 2.0*max_weight;
-    while (beta > weights[index]) {
+    while (beta > weights[index]) 
+    {
       beta -= weights[index];
       index = (index + 1) % num_particles;
-    }
+    }    
+    */
     new_particles.push_back(particles[index]);
   }
 
